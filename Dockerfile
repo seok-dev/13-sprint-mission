@@ -24,12 +24,9 @@ ENV JVM_OPTS=""
 ENV SPRING_PROFILES_ACTIVE=prod
 
 
-COPY --from=build /app/build/libs/${PROJECT_NAME}-${PROJECT_VERSION}.jar app.jar
+COPY --from=build /app/build/libs/${PROJECT_NAME}-${PROJECT_VERSION}.jar ./
 
 
 EXPOSE 80
 
-ENTRYPOINT ["sh", "-c", "java $JVM_OPTS -jar app.jar"]
-
-
-
+ENTRYPOINT ["sh", "-c", "java $JVM_OPTS -jar ${PROJECT_NAME}-${PROJECT_VERSION}.jar"]
