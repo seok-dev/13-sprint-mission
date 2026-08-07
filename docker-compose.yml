@@ -29,8 +29,13 @@ services:
       - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL}
       - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
       - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
+      - STORAGE_TYPE=${STORAGE_TYPE}
+      - AWS_S3_REGION=${AWS_S3_REGION}
+      - AWS_S3_BUCKET=${AWS_S3_BUCKET}
+      - AWS_S3_PRESIGNED_URL_EXPIRATION=${AWS_S3_PRESIGNED_URL_EXPIRATION}
     volumes:
       - storage-data:/app/.discodeit/data
+      - ~/.aws:/root/.aws:ro
     depends_on:
       db:
         condition: service_healthy

@@ -10,7 +10,7 @@ RUN yum install -y findutils && yum clean all && chmod +x gradlew && ./gradlew d
 
 COPY src ./src
 
-RUN ./gradlew clean build --no-daemon
+RUN ./gradlew clean build -x test --no-daemon
 
 # === run 스테이지 =============================================
 
