@@ -14,7 +14,7 @@ RUN ./gradlew clean build -x test --no-daemon
 
 # === run 스테이지 =============================================
 
-FROM amazoncorretto:17
+FROM amazoncorretto:17-alpine
 
 WORKDIR /app
 
