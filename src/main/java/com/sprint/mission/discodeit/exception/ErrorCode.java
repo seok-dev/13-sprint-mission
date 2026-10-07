@@ -33,7 +33,10 @@ public enum ErrorCode {
     STORAGE_PUT_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "파일 저장에 실패했습니다."),
     STORAGE_GET_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "파일을 불러오지 못했습니다."),
     STORAGE_INIT_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "스토리지 초기화에 실패했습니다."),
-    FILE_READ_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "파일을 읽는 중 오류가 발생했습니다.");
+    FILE_READ_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "파일을 읽는 중 오류가 발생했습니다."),
+
+
+    INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "유효하지 않은 리프레시 토큰입니다.");
 
     private final HttpStatus status;
     private final String message;

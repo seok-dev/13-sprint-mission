@@ -1,8 +1,8 @@
 package com.sprint.mission.discodeit.config;
 
 import com.sprint.mission.discodeit.security.*;
-import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Value;
+import com.sprint.mission.discodeit.security.jwt.*;
+import com.sprint.mission.discodeit.service.UserService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -13,11 +13,11 @@ import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.core.session.SessionRegistry;
-import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.logout.HttpStatusReturningLogoutSuccessHandler;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 
@@ -25,17 +25,17 @@ import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 @EnableMethodSecurity
 public class SecurityConfig {
 
-    @Value("${discodeit.security.remember-me.key}")
-    private String rememberMeKey;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http,
-                                           LoginSuccessHandler loginSuccessHandler,
+                                           JwtLoginSuccessHandler jwtLoginSuccessHandler,
                                            LoginFailureHandler loginFailureHandler,
                                            CustomAuthenticationEntryPoint customAuthenticationEntryPoint,
                                            CustomAccessDeniedHandler customAccessDeniedHandler,
-                                           SessionRegistry sessionRegistry,
-                                           CustomSessionExpiredStrategy sessionExpiredStrategy, UserDetailsService userDetailsService) throws Exception {
+                                           JwtTokenProvider jwtTokenProvider,
+                                           JwtRegistry jwtRegistry,
+                                           JwtLogoutHandler jwtLogoutHandler,
+                                           UserService userService) throws Exception {
         http
                 .csrf(csrf -> csrf
                         .ignoringRequestMatchers("/h2-console/**")
@@ -44,19 +44,21 @@ public class SecurityConfig {
                 )
                 .formLogin(login -> login
                         .loginProcessingUrl("/api/auth/login")
-                        .successHandler(loginSuccessHandler)
+                        .successHandler(jwtLoginSuccessHandler)
                         .failureHandler(loginFailureHandler)
                 )
                 .logout(logout-> logout
                         .logoutUrl("/api/auth/logout")
-                                .logoutSuccessHandler(new HttpStatusReturningLogoutSuccessHandler(HttpStatus.NO_CONTENT))
-                                .deleteCookies("JSESSIONID")
-                                .invalidateHttpSession(true)
+                                .addLogoutHandler(jwtLogoutHandler)
+                                .logoutSuccessHandler(
+                                        new HttpStatusReturningLogoutSuccessHandler(HttpStatus.NO_CONTENT)
+                                )
                         )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/csrf-token","/api/auth/login","/api/auth/logout").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/users").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/actuator/**", "/h2-console/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/refresh").permitAll()
                         // 정적 리소스
                         .requestMatchers("/",
                                 "/index.html",
@@ -70,19 +72,17 @@ public class SecurityConfig {
                         .authenticationEntryPoint(customAuthenticationEntryPoint)
                         .accessDeniedHandler(customAccessDeniedHandler)
                 )
-                .sessionManagement(management -> management
-                        .sessionConcurrency(concurrency -> concurrency
-                                .maximumSessions(1)
-                                .maxSessionsPreventsLogin(false)
-                                .sessionRegistry(sessionRegistry)
-                                .expiredSessionStrategy(sessionExpiredStrategy)
-                        )
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
-                .rememberMe(rememberMe -> rememberMe
-                        .key(rememberMeKey)
-                        .rememberMeParameter("remember-me")
-                        .tokenValiditySeconds(60 * 60 * 24 * 14)
-                        .userDetailsService(userDetailsService))
+                .addFilterBefore(
+                        new JwtAuthenticationFilter(
+                                jwtTokenProvider,
+                                jwtRegistry,
+                                userService
+                        ),
+                        UsernamePasswordAuthenticationFilter.class
+                )
                 .headers(headers -> headers
                         .frameOptions(frame -> frame.sameOrigin())
                 );

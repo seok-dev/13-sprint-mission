@@ -11,7 +11,7 @@ import com.sprint.mission.discodeit.mapper.UserMapper;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
-import com.sprint.mission.discodeit.security.SessionManager;
+import com.sprint.mission.discodeit.security.jwt.JwtRegistry;
 import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -42,7 +42,7 @@ class BasicUserServiceTest {
     @Mock private UserMapper userMapper;
     @Mock private BinaryContentStorage binaryContentStorage;
     @Mock private PasswordEncoder passwordEncoder;
-    @Mock private SessionManager sessionManager;
+    @Mock private JwtRegistry jwtRegistry;
 
     // 위의 @Mock들이 이 안에 자동으로 주입
     @InjectMocks private BasicUserService userService;
@@ -129,7 +129,7 @@ class BasicUserServiceTest {
 
         // then
         then(userRepository).should().delete(user);
-        then(sessionManager).should().invalidateSessions(userId);
+        then(jwtRegistry).should().invalidateJwtInformationByUserId(userId);
 
     }
 

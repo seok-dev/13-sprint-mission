@@ -13,13 +13,12 @@ import com.sprint.mission.discodeit.mapper.UserMapper;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
-import com.sprint.mission.discodeit.security.SessionManager;
+import com.sprint.mission.discodeit.security.jwt.JwtRegistry;
 import com.sprint.mission.discodeit.service.UserService;
 import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.parameters.P;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,8 +38,7 @@ public class BasicUserService implements UserService {
     private final UserMapper userMapper;
     private final BinaryContentStorage binaryContentStorage;
     private final PasswordEncoder passwordEncoder;
-    private final SessionManager  sessionManager;
-
+    private final JwtRegistry jwtRegistry;
 
     @Override
     public UserDto createUser(UserCreateCommand command,
@@ -82,7 +80,7 @@ public class BasicUserService implements UserService {
 
         log.debug("유저 조회 - name: {}", user.getUsername());
 
-        return userMapper.toDto(user, sessionManager.isOnline(userId));
+        return userMapper.toDto(user, jwtRegistry.hasActiveJwtInformationByUserId(userId));
     }
 
     @Transactional(readOnly = true)
@@ -94,7 +92,7 @@ public class BasicUserService implements UserService {
         }
         log.debug("전체 유저 조회 완료 - 총 {}명", users.size());
         return users.stream()
-                .map(user -> userMapper.toDto(user, sessionManager.isOnline(user.getId())))
+                .map(user -> userMapper.toDto(user, jwtRegistry.hasActiveJwtInformationByUserId(user.getId())))
                 .toList();
     }
 
@@ -140,7 +138,7 @@ public class BasicUserService implements UserService {
 
         log.info("유저 수정 완료 -  name: {}, userId: {}", user.getUsername(), user.getId());
 
-        return userMapper.toDto(user, sessionManager.isOnline(userId));
+        return userMapper.toDto(user, jwtRegistry.hasActiveJwtInformationByUserId(userId));
     }
 
     @Override
@@ -154,7 +152,7 @@ public class BasicUserService implements UserService {
         if (profile != null) {
             binaryContentRepository.delete(profile);
         }
-        sessionManager.invalidateSessions(userId);
+        jwtRegistry.invalidateJwtInformationByUserId(userId);
         log.info("유저 삭제 - name: {}, userId: {}", user.getUsername(), user.getId());
     }
 
@@ -166,7 +164,7 @@ public class BasicUserService implements UserService {
         user.updateRole(newRole);
         userRepository.save(user);
 
-        sessionManager.invalidateSessions(userId);
+        jwtRegistry.invalidateJwtInformationByUserId(userId);
 
         log.info("권한 수정 완료 - userId: {}, newRole: {}", user.getId(), newRole);
 

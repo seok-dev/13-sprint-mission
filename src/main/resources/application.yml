@@ -16,8 +16,10 @@ spring:
 #파일 저장 방식 변경 설정
 discodeit:
   security:
-    remember-me:
-      key: ${REMEMBER_ME_KEY:local-dev-remember-me-key}
+    jwt:
+      secret: ${JWT_SECRET}
+      access-token-expiration: 15m
+      refresh-token-expiration: 7d
   storage:
     type: ${STORAGE_TYPE:local}
     local:

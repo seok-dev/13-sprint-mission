@@ -9,6 +9,7 @@ import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.repository.MessageRepository;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.security.SessionManager;
+import com.sprint.mission.discodeit.security.jwt.JwtRegistry;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,7 +34,7 @@ public abstract class ChannelMapper {
     protected UserMapper userMapper;
 
     @Autowired
-    protected SessionManager sessionManager;
+    protected JwtRegistry jwtRegistry;
 
     @Mapping(target = "participants", expression = "java(mapParticipants(channel))")
     @Mapping(target = "lastMessageAt", expression = "java(mapLastMessageAt(channel))")
@@ -47,7 +48,7 @@ public abstract class ChannelMapper {
                 .stream()
                 .map(readStatus -> {
                     User user = readStatus.getUser();
-                    return userMapper.toDto(user, sessionManager.isOnline(user.getId()));
+                    return userMapper.toDto(user, jwtRegistry.hasActiveJwtInformationByUserId(user.getId()));
                 })
                 .collect(Collectors.toList());
     }

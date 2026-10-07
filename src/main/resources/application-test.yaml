@@ -3,6 +3,7 @@ spring:
     console:
       enabled: true
       path: /h2-console
+
   datasource:
     url: jdbc:h2:mem:testdb;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
     driver-class-name: org.h2.Driver
@@ -13,8 +14,18 @@ spring:
     hibernate:
       ddl-auto: create-drop
     show-sql: true
-    properties:
-      hibernate:
+
+discodeit:
+  security:
+    jwt:
+      # 테스트 전용 키
+      secret: MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=
+      access-token-expiration: 15m
+      refresh-token-expiration: 7d
+
+  storage:
+    type: local
+
 logging:
   level:
     root: WARN
