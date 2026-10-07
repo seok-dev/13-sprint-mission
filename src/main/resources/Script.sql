@@ -70,6 +70,15 @@ CREATE TABLE message_attachments(
     PRIMARY KEY (message_id, attachment_id)
 );
 
+-- notification 테이블 생성
+CREATE TABLE notifications(
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    receiver_id UUID NOT NULL,
+    title TEXT NOT NULL,
+    content TEXT NOT NULL
+);
+
 
 
 
