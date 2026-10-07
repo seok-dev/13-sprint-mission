@@ -48,6 +48,7 @@ CREATE TABLE read_statuses(
     user_id UUID NOT NULL references users(id) ON DELETE CASCADE,
     channel_id UUID NOT NULL references channels(id) ON  DELETE CASCADE,
     last_read_at timestamptz NOT NULL,
+    notification_enabled boolean NOT NULL,
     CONSTRAINT uk_read_statuses_user_channel UNIQUE(user_id, channel_id)
 );
 

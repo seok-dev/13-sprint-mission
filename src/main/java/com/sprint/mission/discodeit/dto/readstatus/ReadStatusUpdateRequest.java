@@ -8,11 +8,16 @@ import java.time.Instant;
 
 public record ReadStatusUpdateRequest(
         @Schema(description = "수정할 읽음 상태 정보")
-        @NotNull(message = "마지막 읽은 시간을 입력해 주세요.")
-        Instant newLastReadAt
+        Instant newLastReadAt,
+
+        @Schema(description = "수정할 채널 알림 활성화 여부")
+        Boolean newNotificationEnabled
 )
 {
     public ReadStatusUpdateCommand toCommand() {
-        return new ReadStatusUpdateCommand(newLastReadAt);
+        return new ReadStatusUpdateCommand(
+                newLastReadAt,
+                newNotificationEnabled
+                );
     }
 }
