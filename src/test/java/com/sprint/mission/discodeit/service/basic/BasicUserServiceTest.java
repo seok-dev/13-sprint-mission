@@ -12,13 +12,13 @@ import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.security.jwt.JwtRegistry;
-import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Optional;
@@ -40,7 +40,7 @@ class BasicUserServiceTest {
     @Mock private BinaryContentRepository binaryContentRepository;
     @Mock private ReadStatusRepository readStatusRepository;
     @Mock private UserMapper userMapper;
-    @Mock private BinaryContentStorage binaryContentStorage;
+    @Mock private ApplicationEventPublisher eventPublisher;
     @Mock private PasswordEncoder passwordEncoder;
     @Mock private JwtRegistry jwtRegistry;
 

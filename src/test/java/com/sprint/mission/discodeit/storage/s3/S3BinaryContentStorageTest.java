@@ -2,6 +2,7 @@ package com.sprint.mission.discodeit.storage.s3;
 
 import com.sprint.mission.discodeit.config.S3Properties;
 import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentDto;
+import com.sprint.mission.discodeit.entity.BinaryContentStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -112,7 +113,7 @@ class S3BinaryContentStorageTest {
         when(props.getBucket()).thenReturn("test-bucket");
         when(props.getPresignedUrlExpiration()).thenReturn(600L);
 
-        BinaryContentDto dto = new BinaryContentDto(id, "스크린샷.jpeg", 100L, "image/jpeg");
+        BinaryContentDto dto = new BinaryContentDto(id, "스크린샷.jpeg", 100L, "image/jpeg", BinaryContentStatus.SUCCESS);
 
         String fakeUrl = "https://test-bucket.s3.amazonaws.com/" + id + "?X-Amz-Signature=abc";
         PresignedGetObjectRequest presigned = mock(PresignedGetObjectRequest.class);

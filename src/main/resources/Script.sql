@@ -6,9 +6,11 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto;
 CREATE TABLE binary_contents(
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ,
     file_name VARCHAR(255) NOT NULL,
     size bigint NOT NULL,
-    content_type VARCHAR(100) NOT NULL
+    content_type VARCHAR(100) NOT NULL,
+    status VARCHAR(20) NOT NULL
     --bytes bytea NOT NULL
 );
 

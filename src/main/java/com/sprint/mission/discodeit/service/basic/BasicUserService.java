@@ -7,6 +7,7 @@ import com.sprint.mission.discodeit.dto.user.UserDto;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.Role;
 import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.event.BinaryContentCreatedEvent;
 import com.sprint.mission.discodeit.exception.user.UserAlreadyExistsException;
 import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.mapper.UserMapper;
@@ -15,9 +16,9 @@ import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.security.jwt.JwtRegistry;
 import com.sprint.mission.discodeit.service.UserService;
-import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -34,9 +35,9 @@ public class BasicUserService implements UserService {
 
     private final UserRepository userRepository;
     private final BinaryContentRepository binaryContentRepository;
+    private final ApplicationEventPublisher eventPublisher;
     private final ReadStatusRepository readStatusRepository;
     private final UserMapper userMapper;
-    private final BinaryContentStorage binaryContentStorage;
     private final PasswordEncoder passwordEncoder;
     private final JwtRegistry jwtRegistry;
 
@@ -61,7 +62,12 @@ public class BasicUserService implements UserService {
         if (profileRequest != null) {
             profile = binaryContentRepository.save(new BinaryContent(
                     profileRequest.fileName(), profileRequest.fileSize(), profileRequest.contentType()));
-            binaryContentStorage.put(profile.getId(), profileRequest.bytes());
+            eventPublisher.publishEvent(
+                    new BinaryContentCreatedEvent(
+                            profile.getId(),
+                            profileRequest.bytes()
+                    )
+            );
         }
         String encodedPassword = passwordEncoder.encode(command.password());
         User user = new User(command.username(), command.email(), encodedPassword, Role.USER, profile);
@@ -108,7 +114,12 @@ public class BasicUserService implements UserService {
 
             BinaryContent profile = binaryContentRepository.save(new BinaryContent(
                     profileRequest.fileName(), profileRequest.fileSize(), profileRequest.contentType()));
-            binaryContentStorage.put(profile.getId(), profileRequest.bytes());
+            eventPublisher.publishEvent(
+                    new BinaryContentCreatedEvent(
+                            profile.getId(),
+                            profileRequest.bytes()
+                    )
+            );
             user.updateUserProfileId(profile);
 
             if (oldProfile != null) {
