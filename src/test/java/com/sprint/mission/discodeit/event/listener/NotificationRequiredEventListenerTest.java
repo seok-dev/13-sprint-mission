@@ -14,10 +14,12 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 
 @SpringBootTest
@@ -67,18 +69,20 @@ class NotificationRequiredEventListenerTest {
                     .isEmpty();
         });
 
-        // 커밋과 동기 리스너 실행이 완료된 뒤 확인한다.
-        List<Notification> notifications = notificationRepository
-                .findAllByReceiverIdOrderByCreatedAtDesc(receiverId);
+        // 커밋 이후 비동기 알림 저장을 기다린다.
+        await().atMost(Duration.ofSeconds(5)).untilAsserted(()->{
+            List<Notification> notifications = notificationRepository
+                    .findAllByReceiverIdOrderByCreatedAtDesc(receiverId);
 
-        assertThat(notifications).hasSize(1);
+            assertThat(notifications).hasSize(1);
 
-        Notification notification = notifications.get(0);
-        assertThat(notification.getReceiverId()).isEqualTo(receiverId);
-        assertThat(notification.getTitle())
-                .isEqualTo("권한이 변경되었습니다.");
-        assertThat(notification.getContent())
-                .isEqualTo("USER -> CHANNEL_MANAGER");
+            Notification notification = notifications.get(0);
+            assertThat(notification.getReceiverId()).isEqualTo(receiverId);
+            assertThat(notification.getTitle())
+                    .isEqualTo("권한이 변경되었습니다.");
+            assertThat(notification.getContent())
+                    .isEqualTo("USER -> CHANNEL_MANAGER");
+        });
     }
 
     @Test

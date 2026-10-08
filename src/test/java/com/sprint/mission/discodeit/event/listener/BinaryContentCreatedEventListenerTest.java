@@ -16,9 +16,11 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.*;
 
 @SpringBootTest
@@ -60,12 +62,15 @@ class BinaryContentCreatedEventListenerTest {
             return dto;
         });
 
-        // execute()가 끝나면 커밋과 동기 리스너 실핼까지 완료된다.
         assertThat(created).isNotNull();
-        verify(binaryContentStorage).put(created.id(), bytes);
 
-        BinaryContentDto saved = binaryContentService.find(created.id());
-        assertThat(saved.status()).isEqualTo(BinaryContentStatus.SUCCESS);
+        await().atMost(Duration.ofSeconds(5)).untilAsserted(()-> {
+            BinaryContentDto saved = binaryContentService.find(created.id());
+
+            assertThat(saved.status()).isEqualTo(BinaryContentStatus.SUCCESS);
+        });
+
+        verify(binaryContentStorage).put(created.id(), bytes);
     }
 
     @Test
@@ -78,11 +83,15 @@ class BinaryContentCreatedEventListenerTest {
         );
 
         assertThat(created).isNotNull();
-        verify(binaryContentStorage).put(created.id(), bytes);
 
-        assertThat(binaryContentRepository.existsById(created.id())).isTrue();
-        assertThat(binaryContentService.find(created.id()).status())
-                .isEqualTo(BinaryContentStatus.FAIL);
+        await().atMost(Duration.ofSeconds(5)).untilAsserted(()-> {
+            assertThat(binaryContentRepository.existsById(created.id())).isTrue();
+
+            assertThat(binaryContentService.find(created.id()).status())
+                    .isEqualTo(BinaryContentStatus.FAIL);
+        });
+
+        verify(binaryContentStorage).put(created.id(), bytes);
     }
 
     @Test
