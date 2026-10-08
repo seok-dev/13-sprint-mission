@@ -25,7 +25,12 @@ public class NotificationRequiredEventListener {
         List<ReadStatus> readStatuses = readStatusRepository
                 .findAllByChannelIdAndNotificationEnabledTrue(event.channelId());
 
-        String title = event.senderName() + " (#" + event.channelName() + ")";
+        String channelName = event.channelName();
+
+        String title = (channelName == null || channelName.isBlank())
+                ? event.senderName() + "(개인 메시지)"
+                : event.senderName() + " (#" + channelName + ")";
+
 
         for (ReadStatus readStatus : readStatuses) {
             UUID receiverId = readStatus.getUser().getId();
