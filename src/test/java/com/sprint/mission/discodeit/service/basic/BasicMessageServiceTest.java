@@ -8,6 +8,7 @@ import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.ChannelType;
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.event.MessageCreatedEvent;
 import com.sprint.mission.discodeit.exception.channel.ChannelNotFoundException;
 import com.sprint.mission.discodeit.exception.message.MessageNotFoundException;
 import com.sprint.mission.discodeit.mapper.MessageMapper;
@@ -69,6 +70,16 @@ class BasicMessageServiceTest {
 
         assertThat(result.content()).isEqualTo("안녕");
         then(messageRepository).should().save(any(Message.class));
+        then(eventPublisher).should().publishEvent(
+                new MessageCreatedEvent(
+                        channel.getId(),
+                        user.getId(),
+                        user.getUsername(),
+                        channel.getName(),
+                        command.content()
+                )
+        );
+
     }
 
     @Test
@@ -99,6 +110,7 @@ class BasicMessageServiceTest {
         MessageDto result = messageService.updateMessage(messageId, command);
 
         assertThat(result.content()).isEqualTo("수정됨");
+        then(eventPublisher).shouldHaveNoInteractions();
     }
 
     @Test

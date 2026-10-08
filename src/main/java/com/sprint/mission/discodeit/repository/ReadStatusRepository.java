@@ -17,6 +17,8 @@ public interface ReadStatusRepository extends JpaRepository<ReadStatus, UUID> {
     // 유저가 참여한 채널 목록 조회
     List<ReadStatus> findAllByUserId (UUID userId);
 
+    List<ReadStatus> findAllByChannelIdAndNotificationEnabledTrue (UUID channelId);
+
     Optional<ReadStatus> findByUserIdAndChannelId(UUID userId, UUID ChannelId);
 
     @Modifying

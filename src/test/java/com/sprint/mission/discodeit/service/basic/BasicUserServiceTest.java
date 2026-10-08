@@ -5,6 +5,7 @@ import com.sprint.mission.discodeit.dto.command.user.UserUpdateCommand;
 import com.sprint.mission.discodeit.dto.user.UserDto;
 import com.sprint.mission.discodeit.entity.Role;
 import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.event.RoleUpdatedEvent;
 import com.sprint.mission.discodeit.exception.user.UserAlreadyExistsException;
 import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.mapper.UserMapper;
@@ -131,6 +132,45 @@ class BasicUserServiceTest {
         then(userRepository).should().delete(user);
         then(jwtRegistry).should().invalidateJwtInformationByUserId(userId);
 
+    }
+
+    @Test
+    void 권한이_변경되면_이벤트를_발행한다() {
+        User user = new User(
+                "receiver", "recevie@example.com", "password",
+                Role.USER, null
+        );
+        UUID userId = user.getId();
+
+        given(userRepository.findById(userId))
+                .willReturn(Optional.of(user));
+
+        userService.updateRole(userId, Role.CHANNEL_MANAGER);
+
+        assertThat(user.getRole()).isEqualTo(Role.CHANNEL_MANAGER);
+
+        then(eventPublisher).should().publishEvent(
+                new RoleUpdatedEvent(
+                        userId,
+                        Role.USER,
+                        Role.CHANNEL_MANAGER
+                )
+        );
+    }
+
+    @Test
+    void 같은_권한으로_변경하면_이벤트를_발행하지_않는다() {
+        User user = new User(
+                "receiver", "recevie@example.com", "password",
+                Role.USER, null
+        );
+        UUID userId = user.getId();
+
+        given(userRepository.findById(userId)).willReturn(Optional.of(user));
+
+        userService.updateRole(userId, Role.USER);
+
+        then(eventPublisher).shouldHaveNoInteractions();
     }
 
 
