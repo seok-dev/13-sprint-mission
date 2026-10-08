@@ -22,4 +22,10 @@ public class StorageException extends DiscodeitException {
     public static StorageException initFailed(String path) {
         return new StorageException(ErrorCode.STORAGE_INIT_FAILED, Map.of("path", path));
     }
+
+    public static StorageException putFailed(UUID id, Throwable cause) {
+        StorageException exception = putFailed(id);
+        exception.initCause(cause);
+        return exception;
+    }
 }
