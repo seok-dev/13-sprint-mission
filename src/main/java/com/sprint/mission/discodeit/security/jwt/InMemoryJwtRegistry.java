@@ -1,6 +1,7 @@
 package com.sprint.mission.discodeit.security.jwt;
 
 import com.sprint.mission.discodeit.exception.auth.InvalidRefreshTokenException;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -22,6 +23,10 @@ public class InMemoryJwtRegistry implements JwtRegistry {
     private final int maxActiveJwtCount = 1;
 
 
+    @CacheEvict(
+            cacheNames = {"users", "channels"},
+            allEntries = true
+    )
     @Override
     public synchronized void registerJwtInformation(JwtInformation jwtInformation) {
         UUID userId = jwtInformation.getUserDto().id();
@@ -35,6 +40,10 @@ public class InMemoryJwtRegistry implements JwtRegistry {
         queue.offer(jwtInformation);
     }
 
+    @CacheEvict(
+            cacheNames = {"users", "channels"},
+            allEntries = true
+    )
     @Override
     public synchronized void invalidateJwtInformationByUserId(UUID userId) {
         origin.remove(userId);
@@ -74,6 +83,10 @@ public class InMemoryJwtRegistry implements JwtRegistry {
                 .anyMatch(info -> info.getRefreshToken().equals(refreshToken));
     }
 
+    @CacheEvict(
+            cacheNames = {"users", "channels"},
+            allEntries = true
+    )
     @Override
     public synchronized void rotateJwtInformation(String refreshToken, JwtInformation newJwtInformation) {
         if (!jwtTokenProvider.validateRefreshToken(refreshToken)) {
@@ -99,6 +112,10 @@ public class InMemoryJwtRegistry implements JwtRegistry {
         queue.offer(newJwtInformation);
     }
 
+    @CacheEvict(
+            cacheNames = {"users", "channels"},
+            allEntries = true
+    )
     @Override
     @Scheduled(fixedDelay = 1000 * 60 * 5)
     public synchronized void clearExpiredJwtInformation() {

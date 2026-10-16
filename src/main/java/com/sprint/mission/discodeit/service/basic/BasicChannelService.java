@@ -17,6 +17,8 @@ import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.ChannelService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,6 +41,7 @@ public class BasicChannelService implements ChannelService {
     //PUBLIC 채널 생성
     @Override
     @PreAuthorize("hasRole('CHANNEL_MANAGER')")
+    @CacheEvict(cacheNames = "channels", allEntries = true)
     public ChannelDto createPublicChannel(PublicChannelCommand command) {
         if (channelRepository.existsByName(command.name())){
             log.warn("채널 생성 실패 - 중복된 채널명 : {}", command.name());
@@ -52,6 +55,7 @@ public class BasicChannelService implements ChannelService {
 
     //PRIVATE 채널 생성
     @Override
+    @CacheEvict(cacheNames = "channels", allEntries = true)
     public ChannelDto createPrivateChannel(PrivateChannelCommand command) {
         Channel channel = new Channel(ChannelType.PRIVATE, null, null);
         channelRepository.save(channel);
@@ -79,6 +83,7 @@ public class BasicChannelService implements ChannelService {
 
     @Transactional(readOnly = true)
     @Override
+    @Cacheable(cacheNames = "channels", key = "#userId")
     public List<ChannelDto> findAllByUserId(UUID userId) {
         List<Channel> publicChannels = channelRepository.findAll()
                 .stream()
@@ -105,6 +110,7 @@ public class BasicChannelService implements ChannelService {
 
     @Override
     @PreAuthorize("hasRole('CHANNEL_MANAGER')")
+    @CacheEvict(cacheNames = "channels", allEntries = true)
     public ChannelDto updateChannel(UUID ChannelId, ChannelUpdateCommand command) {
         Channel channel = channelRepository.findById(ChannelId)
                 .orElseThrow(() -> ChannelNotFoundException.withId(ChannelId));
@@ -124,6 +130,7 @@ public class BasicChannelService implements ChannelService {
 
     @Override
     @PreAuthorize("hasRole('CHANNEL_MANAGER')")
+    @CacheEvict(cacheNames = "channels", allEntries = true)
     public void deleteChannel(UUID ChannelId) {
         Channel channel = channelRepository.findById(ChannelId)
                 .orElseThrow(() -> ChannelNotFoundException.withId(ChannelId));

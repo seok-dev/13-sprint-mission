@@ -19,6 +19,8 @@ import com.sprint.mission.discodeit.security.jwt.JwtRegistry;
 import com.sprint.mission.discodeit.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -43,6 +45,10 @@ public class BasicUserService implements UserService {
     private final JwtRegistry jwtRegistry;
 
     @Override
+    @CacheEvict(
+            cacheNames = {"users", "channels"},
+            allEntries = true
+    )
     public UserDto createUser(UserCreateCommand command,
                               BinaryContentCreateCommand profileRequest) {
 
@@ -92,6 +98,7 @@ public class BasicUserService implements UserService {
 
     @Transactional(readOnly = true)
     @Override
+    @Cacheable(cacheNames = "users")
     public List<UserDto> findAllUser() {
         List<User> users = userRepository.findAll();
         if (users.isEmpty()) {
@@ -105,6 +112,10 @@ public class BasicUserService implements UserService {
 
     @Override
     @PreAuthorize("principal.userDto.id().equals(#userId)")
+    @CacheEvict(
+            cacheNames = {"users", "channels"},
+            allEntries = true
+    )
     public UserDto updateUser(UUID userId, UserUpdateCommand command, BinaryContentCreateCommand profileRequest) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> UserNotFoundException.withId(userId));
@@ -155,6 +166,10 @@ public class BasicUserService implements UserService {
 
     @Override
     @PreAuthorize("principal.userDto.id().equals(#userId)")
+    @CacheEvict(
+            cacheNames = {"users", "channels"},
+            allEntries = true
+    )
     public void deleteUser(UUID userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(()->UserNotFoundException.withId(userId));
@@ -170,6 +185,10 @@ public class BasicUserService implements UserService {
 
     @PreAuthorize("hasRole('ADMIN')")
     @Override
+    @CacheEvict(
+            cacheNames = {"users", "channels"},
+            allEntries = true
+    )
     public UserDto updateRole(UUID userId, Role newRole) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> UserNotFoundException.withId(userId));

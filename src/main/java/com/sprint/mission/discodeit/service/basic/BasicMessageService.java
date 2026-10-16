@@ -23,6 +23,7 @@ import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.MessageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -50,6 +51,7 @@ public class BasicMessageService implements MessageService {
 
     //메시지, 첨부파일 생성
     @Override
+    @CacheEvict(cacheNames = "channels", allEntries = true)
     public MessageDto create(MessageCreateCommand command, List<BinaryContentCreateCommand> attachments) {
         Channel channel = channelRepository.findById(command.channelId())
                 .orElseThrow(() -> ChannelNotFoundException.withId(command.channelId()));
@@ -135,6 +137,7 @@ public class BasicMessageService implements MessageService {
     //메시지, 첨부파일 삭제
     @Override
     @PreAuthorize("@messageSecurity.isAuthor(#messageId, principal)")
+    @CacheEvict(cacheNames = "channels", allEntries = true)
     public void delete(UUID messageId) {
         Message message = messageRepository.findById(messageId)
                 .orElseThrow(() -> MessageNotFoundException.withId(messageId));

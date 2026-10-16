@@ -1,4 +1,12 @@
 spring:
+  cache:
+    type: caffeine
+    cache-names:
+      - channels
+      - notifications
+      - users
+    caffeine:
+      spec: maximumSize=100,expireAfterAccess=600s,recordStats
   profiles:
       active: dev
   servlet:
@@ -39,7 +47,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health, info, metrics, loggers
+        include: ${ACTUATOR_EXPOSED_ENDPOINTS:health}
   endpoint:
     health:
       show-details: always
