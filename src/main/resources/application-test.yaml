@@ -16,12 +16,15 @@ spring:
     show-sql: true
 
 discodeit:
+  kafka:
+    enabled: false
   security:
     jwt:
       # 테스트 전용 키
       secret: MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=
       access-token-expiration: 15m
       refresh-token-expiration: 7d
+
 
   storage:
     type: local

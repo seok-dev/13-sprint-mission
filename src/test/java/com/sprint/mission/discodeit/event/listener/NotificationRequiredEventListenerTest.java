@@ -10,6 +10,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.kafka.test.context.EmbeddedKafka;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -22,8 +24,18 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
 
-@SpringBootTest
+@SpringBootTest(properties = "discodeit.kafka.enabled=true")
 @ActiveProfiles("test")
+@EmbeddedKafka(
+        partitions = 1,
+        topics = {
+                "discodeit.MessageCreatedEvent",
+                "discodeit.RoleUpdatedEvent",
+                "discodeit.S3UploadFailedEvent"
+        },
+        bootstrapServersProperty = "spring.kafka.bootstrap-servers"
+)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 class NotificationRequiredEventListenerTest {
 
     @Autowired
@@ -70,7 +82,7 @@ class NotificationRequiredEventListenerTest {
         });
 
         // 커밋 이후 비동기 알림 저장을 기다린다.
-        await().atMost(Duration.ofSeconds(5)).untilAsserted(()->{
+        await().atMost(Duration.ofSeconds(15)).untilAsserted(()->{
             List<Notification> notifications = notificationRepository
                     .findAllByReceiverIdOrderByCreatedAtDesc(receiverId);
 

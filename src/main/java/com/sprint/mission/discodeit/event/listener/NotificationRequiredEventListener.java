@@ -14,7 +14,6 @@ import org.springframework.transaction.event.TransactionalEventListener;
 import java.util.List;
 import java.util.UUID;
 
-@Component
 @RequiredArgsConstructor
 public class NotificationRequiredEventListener {
 

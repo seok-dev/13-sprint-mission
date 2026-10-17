@@ -4,14 +4,14 @@ import com.sprint.mission.discodeit.config.S3Properties;
 import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentDto;
 import com.sprint.mission.discodeit.entity.Role;
 import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.event.S3UploadFailedEvent;
 import com.sprint.mission.discodeit.exception.storage.StorageException;
-import com.sprint.mission.discodeit.repository.UserRepository;
-import com.sprint.mission.discodeit.service.NotificationService;
 import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -46,8 +46,7 @@ public class S3BinaryContentStorage implements BinaryContentStorage {
     private final S3Client s3Client;
     private final S3Presigner s3Presigner;
     private final S3Properties props;
-    private final UserRepository userRepository;
-    private final NotificationService  notificationService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     @Retryable(
@@ -76,45 +75,26 @@ public class S3BinaryContentStorage implements BinaryContentStorage {
     public UUID recoverPut(StorageException exception, UUID id, byte[] bytes) {
         String requestId = MDC.get("requestId");
 
-        Throwable cause = exception.getCause()!= null
+        Throwable cause = exception.getCause() != null
                 ? exception.getCause()
-                  : exception;
+                : exception;
 
-        String content = """
-                Operation: S3파일 업로드
-                RequestId: %s
-                BinaryContentId: %s
-                Error: %s
-                """.formatted(
-                        requestId != null ? requestId : "없음",
-                id,
-                cause.getMessage()
-        );
-
-        log.error(
-                "S3 업로드 최종 실패 - requestId: {}, binaryContentId: {}",
-                requestId, id, exception
-        );
+        log.error("S3 업로드 최종 실패 - requestId: {}, binaryContentId: {}", requestId, id, exception);
 
         try {
-            for (User admin : userRepository.findAllByRole(Role.ADMIN)) {
-                try {
-                    notificationService.create(
-                            admin.getId(),
-                            "S3 파일 업로드 실패",
-                            content
-                    );
-                } catch (RuntimeException notificationException) {
-                    log.error(
-                            "관리자 실패 알림 저장 실패 - adminId: {}, binaryContentId: {}",
-                            admin.getId(), id, notificationException
-                    );
-                }
-            }
-        } catch (RuntimeException lookupException) {
-            log.error("관리자 조회 실패 - binaryContentId: {}", id, lookupException);
+            eventPublisher.publishEvent(
+                    new S3UploadFailedEvent(
+                            id,
+                            requestId,
+                            "S3 파일 업로드",
+                            cause.getMessage()
+                    )
+            );
+        } catch (RuntimeException publishException) {
+            log.error(
+                    "S3 실패 이벤트 발행 요청 실패 - requestId: {}, binaryContentId: {}", requestId, id, publishException
+            );
         }
-
         throw exception;
     }
 

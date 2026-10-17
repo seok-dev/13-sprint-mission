@@ -14,6 +14,8 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.kafka.test.context.EmbeddedKafka;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import software.amazon.awssdk.core.sync.RequestBody;
@@ -36,9 +38,20 @@ import static org.mockito.Mockito.*;
         "discodeit.storage.s3.region=ap-northeast-2",
         "discodeit.storage.s3.bucket=test-bucket",
         "discodeit.storage.s3.presigned-url-expiration=600",
-        "spring.datasource.url=jdbc:h2:mem:s3failuretest;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE"
+        "spring.datasource.url=jdbc:h2:mem:s3failuretest;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE",
+        "discodeit.kafka.enabled=true"
 })
 @ActiveProfiles("test")
+@EmbeddedKafka(
+        partitions = 1,
+        topics = {
+                "discodeit.MessageCreatedEvent",
+                "discodeit.RoleUpdatedEvent",
+                "discodeit.S3UploadFailedEvent"
+        },
+        bootstrapServersProperty = "spring.kafka.bootstrap-servers"
+)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 class S3UploadFailureIntegrationTest {
 
     @Autowired
@@ -97,7 +110,7 @@ class S3UploadFailureIntegrationTest {
 
             UUID binaryContentId = created.id();
 
-            await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
+            await().atMost(Duration.ofSeconds(15)).untilAsserted(() -> {
                 assertThat(binaryContentService.find(binaryContentId).status())
                         .isEqualTo(BinaryContentStatus.FAIL);
 
