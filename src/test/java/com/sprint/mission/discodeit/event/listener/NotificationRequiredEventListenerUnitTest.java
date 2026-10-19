@@ -46,7 +46,8 @@ class NotificationRequiredEventListenerUnitTest {
                 senderId,
                 "보낸 사람",
                 "general",
-                "안녕하세요"
+                "안녕하세요",
+                null
         );
 
         listener.on(event);

@@ -76,7 +76,8 @@ class BasicMessageServiceTest {
                         user.getId(),
                         user.getUsername(),
                         channel.getName(),
-                        command.content()
+                        command.content(),
+                        expected
                 )
         );
 
