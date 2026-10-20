@@ -1,10 +1,15 @@
 package com.sprint.mission.discodeit.event.listener;
 
+import com.sprint.mission.discodeit.dto.binarycontent.BinaryContentDto;
 import com.sprint.mission.discodeit.dto.notification.NotificationDto;
+import com.sprint.mission.discodeit.entity.BinaryContentStatus;
+import com.sprint.mission.discodeit.event.BinaryContentUpdatedEvent;
 import com.sprint.mission.discodeit.event.NotificationCreatedEvent;
 import com.sprint.mission.discodeit.service.SseService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationEventPublisher;
@@ -72,6 +77,58 @@ class SseRequiredEventListenerIntegrationTest {
         transactionTemplate.executeWithoutResult(status -> {
             eventPublisher.publishEvent(
                     new NotificationCreatedEvent(notification)
+            );
+
+            status.setRollbackOnly();
+        });
+
+        verifyNoInteractions(sseService);
+    }
+
+    @ParameterizedTest
+    @EnumSource(
+            value = BinaryContentStatus.class,
+            names = {"SUCCESS", "FAIL"}
+    )
+    void 커밋_후_파일_상태_변경_이벤트를_전송한다(BinaryContentStatus  uploadStatus) {
+        BinaryContentDto binaryContent = new BinaryContentDto(
+                UUID.randomUUID(),
+                "테스트.png",
+                100L,
+                "image/png",
+                uploadStatus
+        );
+
+        transactionTemplate.executeWithoutResult(status -> {
+            eventPublisher.publishEvent(
+                    new BinaryContentUpdatedEvent(binaryContent)
+            );
+
+            // 커밋 전에는 전송하지 않는다.
+            verifyNoInteractions(sseService);
+        });
+
+        verify(sseService).broadcast(
+                "binaryContents.updated",
+                binaryContent
+        );
+        verifyNoMoreInteractions(sseService);
+    }
+
+
+    @Test
+    void 롤백하면_파일_상태_변경_이벤트를_전송하지_않는다() {
+        BinaryContentDto binaryContent = new BinaryContentDto(
+                UUID.randomUUID(),
+                "테스트.png",
+                100L,
+                "image/png",
+                BinaryContentStatus.SUCCESS
+        );
+
+        transactionTemplate.executeWithoutResult(status -> {
+            eventPublisher.publishEvent(
+                    new BinaryContentUpdatedEvent(binaryContent)
             );
 
             status.setRollbackOnly();

@@ -1,6 +1,7 @@
 package com.sprint.mission.discodeit.event.listener;
 
 import com.sprint.mission.discodeit.dto.notification.NotificationDto;
+import com.sprint.mission.discodeit.event.BinaryContentUpdatedEvent;
 import com.sprint.mission.discodeit.event.NotificationCreatedEvent;
 import com.sprint.mission.discodeit.service.SseService;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +25,14 @@ public class SseRequiredEventListener {
                 List.of(notification.receiverId()),
                 "notifications.created",
                 notification
+        );
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void handleBinaryContent(BinaryContentUpdatedEvent event) {
+        sseService.broadcast(
+                "binaryContents.updated",
+                event.binaryContent()
         );
     }
 }
