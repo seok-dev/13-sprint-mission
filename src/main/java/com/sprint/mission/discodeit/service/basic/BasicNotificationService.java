@@ -2,6 +2,7 @@ package com.sprint.mission.discodeit.service.basic;
 
 import com.sprint.mission.discodeit.dto.notification.NotificationDto;
 import com.sprint.mission.discodeit.entity.Notification;
+import com.sprint.mission.discodeit.event.NotificationCreatedEvent;
 import com.sprint.mission.discodeit.exception.notification.NotificationNotFoundException;
 import com.sprint.mission.discodeit.mapper.NotificationMapper;
 import com.sprint.mission.discodeit.repository.NotificationRepository;
@@ -10,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -26,6 +28,7 @@ public class BasicNotificationService implements NotificationService {
 
     private final NotificationRepository notificationRepository;
     private final NotificationMapper notificationMapper;
+    private final ApplicationEventPublisher eventPublisher;
 
 
     @Override
@@ -35,8 +38,17 @@ public class BasicNotificationService implements NotificationService {
                                   String title,
                                   String content) {
         Notification notification = new Notification(receiverId, title, content);
+
         notificationRepository.save(notification);
-        return notificationMapper.toDto(notification);
+
+        NotificationDto notificationDto =
+                notificationMapper.toDto(notification);
+
+        eventPublisher.publishEvent(
+                new NotificationCreatedEvent(notificationDto)
+        );
+
+        return notificationDto;
     }
 
     @Override
